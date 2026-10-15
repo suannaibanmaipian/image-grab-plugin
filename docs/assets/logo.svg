@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 图提取 ImageGrab 站点图标（favicon）：紫色渐变圆角方块 + 白色下载箭头。
+     纯内联图形，不引用任何外部资源与字体，双击 index.html 也能正常显示。 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img"
+     aria-label="图提取 ImageGrab">
+  <defs>
+    <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4f6ef7"/>
+      <stop offset="100%" stop-color="#7b5cf0"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="30" height="30" rx="9" fill="url(#brandGrad)"/>
+  <path d="M16 8v10" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="m11.5 14 4.5 4.5 4.5-4.5" fill="none" stroke="#fff" stroke-width="2.2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M9.5 22.5h13" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+</svg>

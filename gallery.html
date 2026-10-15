@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>图提取 ImageGrab · 图片预览与下载</title>
+  <link rel="stylesheet" href="gallery.css">
+</head>
+<body>
+  <!-- ==================== 环境提示（非扩展环境打开时显示） ==================== -->
+  <div class="env-warning" id="envWarning" hidden>
+    <strong>当前不在扩展环境中运行。</strong>
+    请通过插件打开本页面（在商品详情页点击右下角「获取图片」按钮），
+    或前往 <code>chrome://extensions</code> 确认「图提取 ImageGrab」已启用。
+  </div>
+
+  <!-- ==================== 顶部栏：来源信息 + 工具栏 ==================== -->
+  <header class="app-header">
+    <div class="app-header__top">
+      <div class="brand">
+        <!-- 内联 SVG 图标，不依赖任何外部图片 -->
+        <span class="brand__logo" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="32" height="32" role="img">
+            <defs>
+              <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#4f6ef7"/>
+                <stop offset="100%" stop-color="#7b5cf0"/>
+              </linearGradient>
+            </defs>
+            <rect x="1" y="1" width="30" height="30" rx="9" fill="url(#brandGrad)"/>
+            <path d="M16 8v10" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="m11.5 14 4.5 4.5 4.5-4.5" fill="none" stroke="#fff"
+                  stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9.5 22.5h13" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <div class="brand__text">
+          <h1 class="brand__title">图提取 <span class="brand__en">ImageGrab</span></h1>
+          <p class="brand__sub" id="sourceInfo">正在读取来源页面信息…</p>
+        </div>
+      </div>
+
+      <span class="badge" id="platformBadge" hidden></span>
+    </div>
+
+    <!-- 工具栏：全选 / 反选 / 已选数量 / 下载 -->
+    <div class="toolbar">
+      <div class="toolbar__group">
+        <button id="selectAllBtn" class="btn btn--ghost" type="button">全选</button>
+        <button id="invertBtn" class="btn btn--ghost" type="button">反选</button>
+        <button id="reloadBtn" class="btn btn--ghost" type="button">重新读取</button>
+        <span class="counter" id="counter" aria-live="polite">已选 0 / 共 0</span>
+      </div>
+
+      <div class="toolbar__group">
+        <button id="retryBtn" class="btn btn--ghost" type="button" hidden>重试失败项</button>
+        <button id="downloadBtn" class="btn btn--primary" type="button" disabled>下载选中 (0)</button>
+      </div>
+    </div>
+
+    <!-- 下载进度 -->
+    <div class="progress" id="progressWrap" hidden>
+      <div class="progress__bar">
+        <div class="progress__fill" id="progressFill"></div>
+      </div>
+      <span class="progress__text" id="progressText">0 / 0</span>
+    </div>
+  </header>
+
+  <!-- ==================== 主体 ==================== -->
+  <main class="app-main">
+    <!-- 结果横幅（下载完成 / 出错提示） -->
+    <div class="banner" id="resultBanner" hidden role="status" aria-live="polite"></div>
+
+    <!-- 空状态：未提取到任何图片 -->
+    <section class="empty" id="emptyState" hidden>
+      <div class="empty__art" aria-hidden="true">
+        <svg viewBox="0 0 200 140" width="200" height="140" role="img">
+          <rect x="8" y="14" width="184" height="112" rx="14" fill="#eef1fb"
+                stroke="#c9d2f5" stroke-width="2" stroke-dasharray="7 7"/>
+          <rect x="34" y="38" width="52" height="40" rx="8" fill="#dfe5fb"/>
+          <circle cx="50" cy="52" r="6" fill="#b9c4f2"/>
+          <path d="M34 74l14-14 12 12 10-8 16 16z" fill="#b9c4f2"/>
+          <rect x="102" y="38" width="60" height="12" rx="6" fill="#dfe5fb"/>
+          <rect x="102" y="58" width="44" height="12" rx="6" fill="#e9ecfb"/>
+          <rect x="102" y="78" width="52" height="12" rx="6" fill="#e9ecfb"/>
+          <path d="M84 96v14h32" fill="none" stroke="#c9d2f5" stroke-width="2"/>
+        </svg>
+      </div>
+      <h2 class="empty__title">还没有提取到图片</h2>
+      <p class="empty__desc">
+        请打开淘宝 / 天猫 / 京东 / 拼多多商家版的<strong>商品详情页</strong>，
+        点击页面右下角的「<strong>获取图片</strong>」按钮，图片会自动出现在这里。
+      </p>
+      <ul class="empty__tips">
+        <li>需要页面已登录且商品详情正常展示图片</li>
+        <li>图片是懒加载的，建议先向下滚动让图片加载出来再点击按钮</li>
+        <li>小于 100 × 100 的图、图标与 logo 会被自动过滤</li>
+      </ul>
+    </section>
+
+    <!-- 图片网格 -->
+    <section class="gallery" id="gallery" aria-label="提取到的商品图片"></section>
+
+    <!-- 下载日志 -->
+    <section class="log" id="logWrap" hidden>
+      <div class="log__head">
+        <h2 class="log__title">下载日志</h2>
+        <button id="clearLogBtn" class="btn btn--link" type="button">清空</button>
+      </div>
+      <ul class="log__list" id="logList"></ul>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>图提取 ImageGrab · 下载文件保存到浏览器默认下载目录，格式统一为 PNG，文件名按 <code>商品图_001.png</code> 递增。</p>
+  </footer>
+
+  <!-- ==================== 大图预览（Lightbox） ==================== -->
+  <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="图片大图预览">
+    <div class="lightbox__backdrop" id="lightboxBackdrop"></div>
+    <div class="lightbox__panel">
+      <img class="lightbox__img" id="lightboxImg" alt="大图预览" referrerpolicy="no-referrer">
+      <div class="lightbox__info" id="lightboxInfo"></div>
+      <div class="lightbox__actions">
+        <button id="lightboxToggle" class="btn btn--ghost" type="button">选中此图</button>
+        <button id="lightboxDownload" class="btn btn--primary" type="button">下载此图</button>
+        <button id="lightboxClose" class="btn btn--ghost" type="button">关闭（Esc）</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 轻提示 -->
+  <div class="toast-area" id="toastArea" aria-live="polite"></div>
+
+  <!-- 外部脚本：MV3 的内容安全策略禁止内联脚本，必须用 src 引入 -->
+  <script src="gallery.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+/**
+ * content.css —— 「获取图片」悬浮按钮的样式
+ *
+ * 说明：
+ *  1) 本文件只在 Shadow DOM 内部生效（content.js 通过 <link> 引入），
+ *     因此不会污染宿主页面的样式，也不受页面 CSS 影响。
+ *  2) 所有类名统一使用 .ig- 前缀，避免与页面样式重名。
+ *  3) 关键定位属性（position/right/bottom/z-index）在 content.js 里也做了
+ *     内联设置，双保险防止个别页面的 !important 覆盖。
+ */
+
+/* ==================== 设计变量 ==================== */
+:host {
+  --ig-primary: #4f6ef7;              /* 主色 */
+  --ig-primary-2: #7b5cf0;            /* 渐变副色（蓝紫） */
+  --ig-gradient: linear-gradient(135deg, var(--ig-primary) 0%, var(--ig-primary-2) 100%);
+  --ig-text: #ffffff;                 /* 按钮文字色 */
+  --ig-radius: 14px;                  /* 圆角 */
+  --ig-shadow: 0 8px 24px rgba(24, 39, 92, 0.28);
+  --ig-shadow-hover: 0 12px 30px rgba(24, 39, 92, 0.38);
+  --ig-transition: 0.2s ease;
+
+  /* 宿主元素：固定在右下角，用 inline-block 让盒子只占内容大小，尽量不遮挡页面 */
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2147483000;
+  display: inline-block;
+  max-width: min(320px, calc(100vw - 32px));
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #1f2937;
+  text-align: right;
+  pointer-events: none;  /* 宿主空白区域不拦截页面点击，只有按钮与提示可点 */
+}
+
+/* ==================== 整体容器 ==================== */
+.ig-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+/* ==================== 主按钮 ==================== */
+.ig-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: var(--ig-radius);
+  background: var(--ig-gradient);
+  color: var(--ig-text);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  box-shadow: var(--ig-shadow);
+  transition: transform var(--ig-transition), box-shadow var(--ig-transition), filter var(--ig-transition);
+  -webkit-appearance: none;
+  appearance: none;
+  user-select: none;
+}
+
+/* hover：轻微上浮 + 阴影加深，给用户明确反馈 */
+.ig-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--ig-shadow-hover);
+  filter: saturate(1.08);
+}
+
+/* active：按下时回落，形成「按下」的物理感 */
+.ig-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 4px 14px rgba(24, 39, 92, 0.3);
+}
+
+.ig-btn:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* 扫描/发送中：禁用态（防止重复点击） */
+.ig-btn:disabled,
+.ig-btn--busy {
+  opacity: 0.65;
+  cursor: progress;
+  transform: none;
+}
+
+.ig-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.ig-btn__icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.ig-btn__label {
+  white-space: nowrap;
+}
+
+/* 忙碌时的旋转小图标 */
+.ig-btn--busy .ig-btn__icon {
+  animation: ig-spin 1s linear infinite;
+}
+
+@keyframes ig-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==================== 状态提示气泡 ==================== */
+.ig-status {
+  max-width: 280px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: rgba(17, 24, 39, 0.88);
+  color: #f9fafb;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.28);
+  backdrop-filter: blur(4px);
+  animation: ig-fade-in 0.2s ease;
+  word-break: break-all;
+}
+
+/* 成功 / 失败 两种语义色 */
+.ig-status--ok {
+  background: rgba(5, 122, 85, 0.92);
+}
+
+.ig-status--error {
+  background: rgba(180, 35, 24, 0.92);
+}
+
+.ig-status[hidden] {
+  display: none;
+}
+
+@keyframes ig-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==================== 窄屏适配 ==================== */
+@media (max-width: 480px) {
+  :host {
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .ig-btn {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}
